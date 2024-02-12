@@ -1,5 +1,5 @@
 """
-Right hand side calculation for satellite equation of motion
+System right hand side calculation for satellite equation of motion in point potential
 """
 import numpy as np
 from .exceptions import InvalidInputException
@@ -7,8 +7,9 @@ from .exceptions import InvalidInputException
 
 def rhs_point_potential(t, state_vector, grav_param):
     """
-    Calculation of rhs
+    Calculation of rhs for satellite equation of motion in point potential
         Args:
+            t (int, float, np.int64): time
             state_vector (np.array[float]): state vector
             grav_param (int, float, np.int64): gravitational parameter
 
