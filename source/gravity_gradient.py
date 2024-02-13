@@ -5,6 +5,7 @@ from .exceptions import InvalidInputException
 
 def gravity_gradient_calculation(position_vec, attitude_quat, inertia_matrix_principal_axis, grav_param):
 
+
     if not isinstance(position_vec, np.ndarray) and len(position_vec) != 3:
         raise InvalidInputException("Input data error in state vector !")
 
@@ -33,4 +34,3 @@ def gravity_gradient_calculation(position_vec, attitude_quat, inertia_matrix_pri
     Gz = (Ix - Iy) * np.sin(2 * etta) * np.sin(phi)
 
     return np.array([Gx, Gy, Gz]) * 3 * grav_param / (2 * R_0)
-

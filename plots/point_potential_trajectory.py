@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-data = np.loadtxt("../tests/saved_data/point_potential_traj.txt")
+data = np.loadtxt("../tests/saved_data/point_potential/point_potential_traj.txt")
 
 times = data[:, 0]
 x = data[:, 1]
