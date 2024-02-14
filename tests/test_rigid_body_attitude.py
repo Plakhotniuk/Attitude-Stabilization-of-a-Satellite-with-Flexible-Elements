@@ -22,9 +22,9 @@ class TestRigidBodyAttitude(TestCase):
                                        [0., 1., 0.],
                                        [0., 0., 1.]])
         self.state_vector[:4] = np.array([1., 0., 0., 0])  # attitude quaternion
-        self.state_vector[4:7] = np.array([0., 0., 1.])  # angular velocity vector
-        self.inertia_matrix = np.array([[1., 0., 0.],
-                                        [0., 1., 0.],
+        self.state_vector[4:7] = np.array([0., 0., 0.])  # angular velocity vector
+        self.inertia_matrix = np.array([[1000., 0., 0.],
+                                        [0., 1000., 0.],
                                         [0., 0., 1.]])
 
         self.G = 6.6742e-11
@@ -55,10 +55,11 @@ class TestRigidBodyAttitude(TestCase):
 
         assert np.all(np.isclose(np.linalg.norm(quaternions, axis=1), 1., rtol=1e-6, atol=1e-6))
 
-        np.savetxt("saved_data/rotations/quaternion_norms.txt", np.linalg.norm(quaternions, axis=1), delimiter=" ")
+        if 0:
+            np.savetxt("saved_data/rotations/quaternion_norms.txt", np.linalg.norm(quaternions, axis=1), delimiter=" ")
 
-        np.savetxt("saved_data/rotations/basis_vector_rotation.txt",
-                   np.c_[rotated_basis_vector_x, rotated_basis_vector_y, rotated_basis_vector_z], delimiter=" ")
+            np.savetxt("saved_data/rotations/basis_vector_rotation.txt",
+                       np.c_[rotated_basis_vector_x, rotated_basis_vector_y, rotated_basis_vector_z], delimiter=" ")
 
     def test_interpolation(self):
 
@@ -78,8 +79,8 @@ class TestRigidBodyAttitude(TestCase):
                                                                             grav_param=self.grav_param)),
                                  t_span=(self.time_start, self.time_end),
                                  y0=self.state_vector,
-                                 t_eval=self.times, rtol=1e-8,
-                                 atol=1e-8, method='RK45')
+                                 t_eval=self.times, rtol=1e-9,
+                                 atol=1e-9, method='DOP853')
 
         self.x_sol = sol_rotation.y.T
 
@@ -106,4 +107,6 @@ class TestRigidBodyAttitude(TestCase):
                 inertia_matrix_principal_axis=self.inertia_matrix,
                 grav_param=self.grav_param))
 
-        np.savetxt("saved_data/rotations/gravity_moment.txt", gravity_moment, delimiter=" ")
+        gravity_moment_norm = np.linalg.norm(np.array(gravity_moment), axis=1)
+        assert np.all(np.isclose(gravity_moment_norm, gravity_moment_norm[0], rtol=1e-4, atol=1e-4))
+        np.savetxt("saved_data/rotations/gravity_moment_norm.txt", gravity_moment_norm, delimiter=" ")
