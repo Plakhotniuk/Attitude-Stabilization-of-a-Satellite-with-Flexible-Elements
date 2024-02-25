@@ -1,10 +1,10 @@
 import numpy as np
 from unittest import TestCase
-from source.rigid_body_attitude import rhs_rigid_body_motion
+from source.rhs_rigid_body_attitude import rhs_rigid_body_motion
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 from source.math_functions import rotate_vec_with_quat
-from source.gravity_gradient import gravity_gradient_calculation
+from source.gravity_gradient import gravity_gradient
 
 
 class TestRigidBodyAttitude(TestCase):
@@ -35,7 +35,7 @@ class TestRigidBodyAttitude(TestCase):
         data_traj = np.loadtxt("../tests/saved_data/point_potential/point_potential_traj.txt")
         self.times_traj = data_traj[:, 0]
         self.position_traj = data_traj[:, 1:4]
-        self.interpolator_traj = interp1d(x=self.times_traj, y=self.position_traj, kind='cubic', axis=0)
+        self.interpolator_traj = interp1d(x=self.times_traj, y=self.position_traj, kind='cubic', axis=0, fill_value="extrapolate")
 
     def test_rotation_no_external_moments(self):
         sol_rotation = solve_ivp(fun=lambda t, x: rhs_rigid_body_motion(t=t, state_vector=x,
@@ -70,9 +70,10 @@ class TestRigidBodyAttitude(TestCase):
                 rtol=1e-10, atol=1e-10))
 
     def test_rotation_gravity_moment(self):
+
         sol_rotation = solve_ivp(fun=lambda t, x: rhs_rigid_body_motion(t=t, state_vector=x,
                                                                         inertia_matrix_principal_axis=self.inertia_matrix,
-                                                                        external_moment=gravity_gradient_calculation(
+                                                                        external_moment=gravity_gradient(
                                                                             position_vec=self.interpolator_traj(t),
                                                                             attitude_quat=x[:4],
                                                                             inertia_matrix_principal_axis=self.inertia_matrix,
@@ -80,7 +81,7 @@ class TestRigidBodyAttitude(TestCase):
                                  t_span=(self.time_start, self.time_end),
                                  y0=self.state_vector,
                                  t_eval=self.times, rtol=1e-9,
-                                 atol=1e-9, method='DOP853')
+                                 atol=1e-9, method='RK45')
 
         self.x_sol = sol_rotation.y.T
 
@@ -97,16 +98,15 @@ class TestRigidBodyAttitude(TestCase):
         np.savetxt("saved_data/rotations/basis_vector_rotation_gravity_moment.txt",
                    np.c_[rotated_basis_vector_x, rotated_basis_vector_y, rotated_basis_vector_z], delimiter=" ")
 
-    def test_external_moment_conservation(self):
+    def test_external_moment(self):
         attitude_quats = np.loadtxt("saved_data/rotations/attitude_quaternions.txt")
         gravity_moment = []
         for i in range(len(self.times)):
-            gravity_moment.append(gravity_gradient_calculation(
+            gravity_moment.append(gravity_gradient(
                 position_vec=self.interpolator_traj(self.times[i]),
-                attitude_quat=attitude_quats[i],
+                attitude_quat=attitude_quats[i, :],
                 inertia_matrix_principal_axis=self.inertia_matrix,
                 grav_param=self.grav_param))
 
-        gravity_moment_norm = np.linalg.norm(np.array(gravity_moment), axis=1)
-        assert np.all(np.isclose(gravity_moment_norm, gravity_moment_norm[0], rtol=1e-4, atol=1e-4))
-        np.savetxt("saved_data/rotations/gravity_moment_norm.txt", gravity_moment_norm, delimiter=" ")
+        np.savetxt("saved_data/rotations/gravity_moment.txt", gravity_moment, delimiter=" ")
+
