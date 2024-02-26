@@ -21,11 +21,11 @@ class TestRigidBodyAttitude(TestCase):
         self.basis_vectors = np.array([[1., 0., 0.],
                                        [0., 1., 0.],
                                        [0., 0., 1.]])
-        self.state_vector[:4] = np.array([1., 0., 0., 0])  # attitude quaternion
+        self.state_vector[:4] = np.array([1., 0., 0., 0])  # initial attitude quaternion
         self.state_vector[4:7] = np.array([0., 0., 0.])  # angular velocity vector
-        self.inertia_matrix = np.array([[1000., 0., 0.],
+        self.inertia_matrix = np.array([[1., 0., 0.],
                                         [0., 1000., 0.],
-                                        [0., 0., 1.]])
+                                        [0., 0., 100.]])
 
         self.G = 6.6742e-11
         self.m_earth = 5.974e24
@@ -39,7 +39,7 @@ class TestRigidBodyAttitude(TestCase):
 
     def test_rotation_no_external_moments(self):
         sol_rotation = solve_ivp(fun=lambda t, x: rhs_rigid_body_motion(t=t, state_vector=x,
-                                                                        inertia_matrix_principal_axis=self.inertia_matrix,
+                                                                        inertia_matrix=self.inertia_matrix,
                                                                         external_moment=np.zeros(3)),
                                  t_span=(self.time_start, self.time_end),
                                  y0=self.state_vector,
@@ -72,11 +72,10 @@ class TestRigidBodyAttitude(TestCase):
     def test_rotation_gravity_moment(self):
 
         sol_rotation = solve_ivp(fun=lambda t, x: rhs_rigid_body_motion(t=t, state_vector=x,
-                                                                        inertia_matrix_principal_axis=self.inertia_matrix,
+                                                                        inertia_matrix=self.inertia_matrix,
                                                                         external_moment=gravity_gradient(
                                                                             position_vec=self.interpolator_traj(t),
-                                                                            attitude_quat=x[:4],
-                                                                            inertia_matrix_principal_axis=self.inertia_matrix,
+                                                                            inertia_matrix=self.inertia_matrix,
                                                                             grav_param=self.grav_param)),
                                  t_span=(self.time_start, self.time_end),
                                  y0=self.state_vector,
@@ -104,8 +103,7 @@ class TestRigidBodyAttitude(TestCase):
         for i in range(len(self.times)):
             gravity_moment.append(gravity_gradient(
                 position_vec=self.interpolator_traj(self.times[i]),
-                attitude_quat=attitude_quats[i, :],
-                inertia_matrix_principal_axis=self.inertia_matrix,
+                inertia_matrix=self.inertia_matrix,
                 grav_param=self.grav_param))
 
         np.savetxt("saved_data/rotations/gravity_moment.txt", gravity_moment, delimiter=" ")

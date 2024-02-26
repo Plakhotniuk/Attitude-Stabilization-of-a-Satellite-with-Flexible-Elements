@@ -80,3 +80,10 @@ def quat_conjugate(q):
     q_new[1:] *= -1.
 
     return q_new
+
+
+def quat_from_2_vectors(u, v):
+    d = np.dot(u, v)
+    vector_part = np.cross(u, v)
+    scalar_part = d + np.sqrt(d * d + np.dot(vector_part, vector_part))
+    return normalize(np.array([scalar_part, vector_part[0], vector_part[1], vector_part[2]]))
